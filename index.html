@@ -1,0 +1,1451 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Admin - ES_COMPANY</title>
+    <link rel="icon" type="image/png" href="https://i.postimg.cc/qqFcpxM8/file-000000001f3471fda269be0d033dc40a.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #2a2a72;
+            --secondary: #009ffd;
+            --accent: #ff6b6b;
+            --light: #f8f9fa;
+            --dark: #232528;
+            --success: #28a745;
+            --warning: #ffc107;
+            --danger: #dc3545;
+            --gray: #6c757d;
+            --light-gray: #e9ecef;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            --radius: 8px;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fb;
+            color: var(--dark);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        /* Header */
+        .admin-header {
+            background: linear-gradient(135deg, var(--primary), #1a1a52);
+            color: white;
+            padding: 15px 0;
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        
+        .admin-header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .admin-logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            text-decoration: none;
+            color: white;
+        }
+        
+        .admin-logo img {
+            height: 40px;
+            width: auto;
+        }
+        
+        .admin-logo h1 {
+            font-size: 1.6rem;
+            font-weight: 700;
+        }
+        
+        .admin-logo span {
+            color: var(--secondary);
+        }
+        
+        .admin-logout {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .admin-logout:hover {
+            background-color: var(--accent);
+        }
+        
+        /* Admin Dashboard */
+        .admin-dashboard {
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            min-height: calc(100vh - 70px);
+        }
+        
+        /* Sidebar */
+        .admin-sidebar {
+            background-color: white;
+            border-right: 1px solid var(--light-gray);
+            padding: 30px 0;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.05);
+        }
+        
+        .admin-user {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 0 20px 30px;
+            border-bottom: 1px solid var(--light-gray);
+            margin-bottom: 30px;
+        }
+        
+        .admin-user-avatar {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, var(--secondary), #0088e0);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.3rem;
+        }
+        
+        .admin-user-info h3 {
+            color: var(--primary);
+            margin-bottom: 5px;
+        }
+        
+        .admin-user-info p {
+            color: var(--gray);
+            font-size: 0.9rem;
+        }
+        
+        .admin-nav ul {
+            list-style: none;
+        }
+        
+        .admin-nav li {
+            margin-bottom: 5px;
+        }
+        
+        .admin-nav a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 15px 20px;
+            color: var(--dark);
+            text-decoration: none;
+            transition: all 0.3s;
+            border-left: 3px solid transparent;
+        }
+        
+        .admin-nav a:hover {
+            background-color: var(--light);
+            color: var(--primary);
+            border-left-color: var(--gray);
+        }
+        
+        .admin-nav a.active {
+            background-color: rgba(0, 159, 253, 0.1);
+            color: var(--secondary);
+            border-left-color: var(--secondary);
+            font-weight: 600;
+        }
+        
+        .admin-nav i {
+            width: 20px;
+            text-align: center;
+        }
+        
+        /* Main Content */
+        .admin-main {
+            padding: 30px;
+            background-color: #f9fafc;
+        }
+        
+        .admin-title {
+            color: var(--primary);
+            font-size: 2rem;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .admin-subtitle {
+            color: var(--gray);
+            margin-bottom: 30px;
+            font-size: 1.1rem;
+        }
+        
+        /* Stats Cards */
+        .stats-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+        
+        .stat-card {
+            background-color: white;
+            border-radius: var(--radius);
+            padding: 25px;
+            box-shadow: var(--shadow);
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            transition: transform 0.3s;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: white;
+        }
+        
+        .stat-icon.total {
+            background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+        }
+        
+        .stat-icon.new {
+            background: linear-gradient(135deg, #00b894, #55efc4);
+        }
+        
+        .stat-icon.pending {
+            background: linear-gradient(135deg, #fdcb6e, #ffeaa7);
+        }
+        
+        .stat-icon.responded {
+            background: linear-gradient(135deg, #009ffd, #74b9ff);
+        }
+        
+        .stat-info h3 {
+            font-size: 2rem;
+            color: var(--primary);
+            margin-bottom: 5px;
+        }
+        
+        .stat-info p {
+            color: var(--gray);
+            font-weight: 500;
+        }
+        
+        /* Comments Table */
+        .comments-section {
+            background-color: white;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+        
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 25px;
+            border-bottom: 1px solid var(--light-gray);
+        }
+        
+        .section-header h2 {
+            color: var(--primary);
+            font-size: 1.5rem;
+        }
+        
+        .table-filters {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .filter-btn {
+            padding: 8px 15px;
+            background-color: var(--light);
+            border: 1px solid #ddd;
+            border-radius: var(--radius);
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        
+        .filter-btn:hover {
+            background-color: #e9ecef;
+        }
+        
+        .filter-btn.active {
+            background-color: var(--secondary);
+            color: white;
+            border-color: var(--secondary);
+        }
+        
+        .comments-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .comments-table th {
+            background-color: #f8f9fa;
+            color: var(--primary);
+            text-align: left;
+            padding: 15px 25px;
+            font-weight: 600;
+            border-bottom: 1px solid var(--light-gray);
+        }
+        
+        .comments-table td {
+            padding: 15px 25px;
+            border-bottom: 1px solid var(--light-gray);
+        }
+        
+        .comments-table tr:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .comments-table tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .comment-user {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .user-avatar {
+            width: 35px;
+            height: 35px;
+            background: linear-gradient(135deg, var(--secondary), #0088e0);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        
+        .user-info h4 {
+            color: var(--primary);
+            margin-bottom: 3px;
+        }
+        
+        .user-info p {
+            color: var(--gray);
+            font-size: 0.85rem;
+        }
+        
+        .comment-subject {
+            font-weight: 500;
+            color: var(--dark);
+        }
+        
+        .comment-message {
+            max-width: 300px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            color: var(--gray);
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        .status-new {
+            background-color: rgba(0, 184, 148, 0.1);
+            color: #00b894;
+        }
+        
+        .status-pending {
+            background-color: rgba(253, 203, 110, 0.1);
+            color: #fdcb6e;
+        }
+        
+        .status-responded {
+            background-color: rgba(0, 159, 253, 0.1);
+            color: var(--secondary);
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .action-btn {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: none;
+        }
+        
+        .view-btn {
+            background-color: rgba(0, 159, 253, 0.1);
+            color: var(--secondary);
+        }
+        
+        .view-btn:hover {
+            background-color: var(--secondary);
+            color: white;
+        }
+        
+        .delete-btn {
+            background-color: rgba(220, 53, 69, 0.1);
+            color: var(--danger);
+        }
+        
+        .delete-btn:hover {
+            background-color: var(--danger);
+            color: white;
+        }
+        
+        .mark-btn {
+            background-color: rgba(40, 167, 69, 0.1);
+            color: var(--success);
+        }
+        
+        .mark-btn:hover {
+            background-color: var(--success);
+            color: white;
+        }
+        
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background-color: white;
+            border-radius: var(--radius);
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 25px;
+            border-bottom: 1px solid var(--light-gray);
+        }
+        
+        .modal-header h3 {
+            color: var(--primary);
+            font-size: 1.3rem;
+        }
+        
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--gray);
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+        
+        .close-modal:hover {
+            color: var(--accent);
+        }
+        
+        .modal-body {
+            padding: 25px;
+        }
+        
+        .comment-detail {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .detail-row {
+            display: flex;
+            gap: 20px;
+        }
+        
+        .detail-item {
+            flex: 1;
+        }
+        
+        .detail-label {
+            display: block;
+            color: var(--gray);
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+        }
+        
+        .detail-value {
+            color: var(--dark);
+            font-weight: 500;
+            padding: 10px 15px;
+            background-color: #f8f9fa;
+            border-radius: var(--radius);
+            border-left: 3px solid var(--secondary);
+        }
+        
+        .message-full {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: var(--radius);
+            white-space: pre-wrap;
+            line-height: 1.6;
+            border-left: 3px solid var(--secondary);
+        }
+        
+        .response-section {
+            margin-top: 20px;
+        }
+        
+        .response-section h4 {
+            color: var(--primary);
+            margin-bottom: 15px;
+        }
+        
+        .response-textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: var(--radius);
+            font-family: inherit;
+            font-size: 1rem;
+            min-height: 120px;
+            resize: vertical;
+            margin-bottom: 15px;
+        }
+        
+        .response-textarea:focus {
+            border-color: var(--secondary);
+            outline: none;
+        }
+        
+        .modal-footer {
+            padding: 20px 25px;
+            border-top: 1px solid var(--light-gray);
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+        }
+        
+        /* Buttons */
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            border-radius: 50px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: all 0.3s;
+            text-decoration: none;
+            text-align: center;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(to right, var(--secondary), #0088e0);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(to right, #0088e0, var(--secondary));
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 159, 253, 0.2);
+        }
+        
+        .btn-secondary {
+            background-color: #e9ecef;
+            color: var(--dark);
+        }
+        
+        .btn-secondary:hover {
+            background-color: #dee2e6;
+        }
+        
+        .btn-success {
+            background-color: var(--success);
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background-color: #218838;
+        }
+        
+        .btn-danger {
+            background-color: var(--danger);
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background-color: #c82333;
+        }
+        
+        /* Login Page */
+        .login-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, var(--primary), #1a1a52);
+        }
+        
+        .login-box {
+            background-color: white;
+            border-radius: var(--radius);
+            width: 90%;
+            max-width: 400px;
+            padding: 40px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+        }
+        
+        .login-logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .login-logo img {
+            height: 50px;
+        }
+        
+        .login-logo h2 {
+            color: var(--primary);
+            font-size: 1.8rem;
+        }
+        
+        .login-logo span {
+            color: var(--secondary);
+        }
+        
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .form-label {
+            font-weight: 600;
+            color: var(--primary);
+        }
+        
+        .form-input {
+            padding: 12px 15px;
+            border: 2px solid #ddd;
+            border-radius: var(--radius);
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+        
+        .form-input:focus {
+            border-color: var(--secondary);
+            outline: none;
+        }
+        
+        .login-error {
+            background-color: rgba(220, 53, 69, 0.1);
+            color: var(--danger);
+            padding: 12px 15px;
+            border-radius: var(--radius);
+            border-left: 3px solid var(--danger);
+            display: none;
+        }
+        
+        .login-error.active {
+            display: block;
+        }
+        
+        /* Responsive */
+        @media (max-width: 992px) {
+            .admin-dashboard {
+                grid-template-columns: 1fr;
+            }
+            
+            .admin-sidebar {
+                display: none;
+            }
+            
+            .admin-sidebar.active {
+                display: block;
+                position: fixed;
+                top: 70px;
+                left: 0;
+                height: calc(100vh - 70px);
+                z-index: 999;
+                width: 250px;
+            }
+            
+            .mobile-menu-btn {
+                display: block;
+                background: none;
+                border: none;
+                color: white;
+                font-size: 1.5rem;
+                cursor: pointer;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .admin-main {
+                padding: 20px 15px;
+            }
+            
+            .stats-cards {
+                grid-template-columns: 1fr 1fr;
+            }
+            
+            .detail-row {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .comments-table {
+                display: block;
+                overflow-x: auto;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .stats-cards {
+                grid-template-columns: 1fr;
+            }
+            
+            .section-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+            
+            .table-filters {
+                flex-wrap: wrap;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Page (shown by default) -->
+    <div class="login-container" id="loginPage">
+        <div class="login-box">
+            <div class="login-logo">
+                <img src="https://i.postimg.cc/qqFcpxM8/file-000000001f3471fda269be0d033dc40a.png" alt="ES_COMPANY Logo">
+                <h2>ES<span>_COMPANY</span></h2>
+            </div>
+            <h3 style="text-align: center; color: var(--primary); margin-bottom: 20px;">Connexion Admin</h3>
+            
+            <div class="login-error" id="loginError">
+                <i class="fas fa-exclamation-circle"></i> Identifiants incorrects. Veuillez réessayer.
+            </div>
+            
+            <form class="login-form" id="loginForm">
+                <div class="form-group">
+                    <label class="form-label" for="adminUsername">Nom d'utilisateur</label>
+                    <input type="text" id="adminUsername" class="form-input" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="adminPassword">Mot de passe</label>
+                    <input type="password" id="adminPassword" class="form-input" required>
+                </div>
+                
+                <button type="submit" class="btn btn-primary" style="width: 100%; padding: 14px;">
+                    <i class="fas fa-sign-in-alt"></i> Se connecter
+                </button>
+            </form>
+            
+            <p style="text-align: center; margin-top: 25px; color: var(--gray); font-size: 0.9rem;">
+                Accès réservé à l'administrateur
+            </p>
+        </div>
+    </div>
+    
+    <!-- Admin Dashboard (hidden by default) -->
+    <div class="admin-dashboard" id="adminDashboard" style="display: none;">
+        <!-- Header -->
+        <header class="admin-header">
+            <div class="container admin-header-content">
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <button class="mobile-menu-btn" id="mobileMenuBtn">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <a href="#" class="admin-logo">
+                        <img src="https://i.postimg.cc/qqFcpxM8/file-000000001f3471fda269be0d033dc40a.png" alt="ES_COMPANY Logo">
+                        <h1>Admin<span>_Panel</span></h1>
+                    </a>
+                </div>
+                
+                <button class="admin-logout" id="logoutBtn">
+                    <i class="fas fa-sign-out-alt"></i> Déconnexion
+                </button>
+            </div>
+        </header>
+        
+        <!-- Sidebar -->
+        <aside class="admin-sidebar" id="adminSidebar">
+            <div class="admin-user">
+                <div class="admin-user-avatar">
+                    <i class="fas fa-user-shield"></i>
+                </div>
+                <div class="admin-user-info">
+                    <h3 id="adminUserName">Admin ES_COMPANY</h3>
+                    <p id="adminUserRole">Administrateur</p>
+                </div>
+            </div>
+            
+            <nav class="admin-nav">
+                <ul>
+                    <li>
+                        <a href="#" class="active" data-page="dashboard">
+                            <i class="fas fa-tachometer-alt"></i> Tableau de bord
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" data-page="comments">
+                            <i class="fas fa-comments"></i> Commentaires
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" data-page="users">
+                            <i class="fas fa-users"></i> Utilisateurs
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" data-page="services">
+                            <i class="fas fa-shopping-cart"></i> Services
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" data-page="settings">
+                            <i class="fas fa-cog"></i> Paramètres
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://e-s-company.netlify.app/" target="_blank">
+                            <i class="fas fa-external-link-alt"></i> Site web
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+        
+        <!-- Main Content -->
+        <main class="admin-main">
+            <h1 class="admin-title">
+                <i class="fas fa-comments"></i> Gestion des Commentaires
+            </h1>
+            <p class="admin-subtitle">Consultez et gérez les commentaires des utilisateurs depuis le formulaire de contact</p>
+            
+            <!-- Stats Cards -->
+            <div class="stats-cards">
+                <div class="stat-card">
+                    <div class="stat-icon total">
+                        <i class="fas fa-inbox"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="totalComments">0</h3>
+                        <p>Total des commentaires</p>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon new">
+                        <i class="fas fa-envelope"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="newComments">0</h3>
+                        <p>Nouveaux commentaires</p>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon pending">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="pendingComments">0</h3>
+                        <p>En attente de réponse</p>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon responded">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="respondedComments">0</h3>
+                        <p>Commentaires répondu</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Comments Table -->
+            <div class="comments-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-list"></i> Liste des Commentaires</h2>
+                    <div class="table-filters">
+                        <button class="filter-btn active" data-filter="all">Tous</button>
+                        <button class="filter-btn" data-filter="new">Nouveaux</button>
+                        <button class="filter-btn" data-filter="pending">En attente</button>
+                        <button class="filter-btn" data-filter="responded">Répondu</button>
+                    </div>
+                </div>
+                
+                <table class="comments-table">
+                    <thead>
+                        <tr>
+                            <th>Utilisateur</th>
+                            <th>Sujet</th>
+                            <th>Message</th>
+                            <th>Date</th>
+                            <th>Statut</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="commentsTableBody">
+                        <!-- Comments will be dynamically inserted here -->
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+    
+    <!-- Comment Detail Modal -->
+    <div class="modal" id="commentModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-eye"></i> Détail du Commentaire</h3>
+                <button class="close-modal" id="closeModal">&times;</button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="comment-detail">
+                    <div class="detail-row">
+                        <div class="detail-item">
+                            <span class="detail-label">Nom complet</span>
+                            <div class="detail-value" id="modalFullName">-</div>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Téléphone</span>
+                            <div class="detail-value" id="modalPhone">-</div>
+                        </div>
+                    </div>
+                    
+                    <div class="detail-row">
+                        <div class="detail-item">
+                            <span class="detail-label">Email</span>
+                            <div class="detail-value" id="modalEmail">-</div>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Sujet</span>
+                            <div class="detail-value" id="modalSubject">-</div>
+                        </div>
+                    </div>
+                    
+                    <div class="detail-item">
+                        <span class="detail-label">Message</span>
+                        <div class="message-full" id="modalMessage">-</div>
+                    </div>
+                    
+                    <div class="detail-item">
+                        <span class="detail-label">Date d'envoi</span>
+                        <div class="detail-value" id="modalDate">-</div>
+                    </div>
+                    
+                    <div class="response-section">
+                        <h4><i class="fas fa-reply"></i> Répondre</h4>
+                        <textarea class="response-textarea" id="responseText" placeholder="Écrivez votre réponse ici..."></textarea>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="closeModalBtn">Fermer</button>
+                <button class="btn btn-success" id="markAsRespondedBtn">Marquer comme répondu</button>
+                <button class="btn btn-primary" id="sendResponseBtn">Envoyer la réponse</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Authentication credentials (in production, these should be stored securely on a server)
+        const ADMIN_USERNAME = "admin_escompany";
+        const ADMIN_PASSWORD = "admin123";
+        
+        // Sample comments data (in production, this would come from a database)
+        let commentsData = [
+            {
+                id: 1,
+                fullName: "Jean Dupont",
+                phone: "+509 48 12 34 56",
+                email: "jean.dupont@example.com",
+                subject: "Diamants FreeFire",
+                message: "Bonjour, j'ai commandé 500 diamants FreeFire il y a 2 heures mais je ne les ai pas encore reçus. Pouvez-vous vérifier?",
+                date: "2023-10-15 14:30",
+                status: "new", // new, pending, responded
+                read: false
+            },
+            {
+                id: 2,
+                fullName: "Marie Laurent",
+                phone: "+509 48 98 76 54",
+                email: "marie.laurent@example.com",
+                subject: "Abonnement Netflix",
+                message: "Je souhaite souscrire à un abonnement Netflix Premium pour 6 mois. Quels sont les tarifs et modalités?",
+                date: "2023-10-14 10:15",
+                status: "pending",
+                read: true
+            },
+            {
+                id: 3,
+                fullName: "Pierre Martin",
+                phone: "+1 510-281 7365",
+                email: "pierre.martin@example.com",
+                subject: "Création compte PayPal",
+                message: "J'ai besoin d'un compte PayPal vérifié pour mes transactions en ligne. Combien de temps prend le processus?",
+                date: "2023-10-13 16:45",
+                status: "responded",
+                read: true
+            },
+            {
+                id: 4,
+                fullName: "Sophie Bernard",
+                phone: "+509 36 12 34 56",
+                email: "sophie.bernard@example.com",
+                subject: "Recharge compte WISE",
+                message: "Je veux recharger mon compte WISE avec 500 USD. Quel est le taux de change actuel?",
+                date: "2023-10-12 09:20",
+                status: "responded",
+                read: true
+            },
+            {
+                id: 5,
+                fullName: "Thomas Petit",
+                phone: "+509 48 55 66 77",
+                email: "thomas.petit@example.com",
+                subject: "Problème technique",
+                message: "Le lien de paiement pour les diamants FreeFire ne fonctionne pas. Pouvez-vous m'envoyer un nouveau lien?",
+                date: "2023-10-11 18:10",
+                status: "new",
+                read: false
+            }
+        ];
+        
+        // DOM Elements
+        const loginPage = document.getElementById('loginPage');
+        const adminDashboard = document.getElementById('adminDashboard');
+        const loginForm = document.getElementById('loginForm');
+        const loginError = document.getElementById('loginError');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const adminSidebar = document.getElementById('adminSidebar');
+        const commentsTableBody = document.getElementById('commentsTableBody');
+        const filterButtons = document.querySelectorAll('.filter-btn');
+        const commentModal = document.getElementById('commentModal');
+        const closeModalBtn = document.getElementById('closeModalBtn');
+        const closeModalIcon = document.getElementById('closeModal');
+        const modalFullName = document.getElementById('modalFullName');
+        const modalPhone = document.getElementById('modalPhone');
+        const modalEmail = document.getElementById('modalEmail');
+        const modalSubject = document.getElementById('modalSubject');
+        const modalMessage = document.getElementById('modalMessage');
+        const modalDate = document.getElementById('modalDate');
+        const markAsRespondedBtn = document.getElementById('markAsRespondedBtn');
+        const sendResponseBtn = document.getElementById('sendResponseBtn');
+        const adminUserName = document.getElementById('adminUserName');
+        const adminUserRole = document.getElementById('adminUserRole');
+        
+        // Stats elements
+        const totalCommentsEl = document.getElementById('totalComments');
+        const newCommentsEl = document.getElementById('newComments');
+        const pendingCommentsEl = document.getElementById('pendingComments');
+        const respondedCommentsEl = document.getElementById('respondedComments');
+        
+        // Current selected comment
+        let selectedCommentId = null;
+        
+        // Check if user is already logged in
+        function checkAuth() {
+            const isLoggedIn = localStorage.getItem('escompany_admin_logged_in');
+            const username = localStorage.getItem('escompany_admin_username');
+            
+            if (isLoggedIn === 'true' && username) {
+                showAdminDashboard(username);
+            }
+        }
+        
+        // Login form submission
+        loginForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('adminUsername').value;
+            const password = document.getElementById('adminPassword').value;
+            
+            // Simple authentication (in production, this would be server-side)
+            if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
+                // Save login state
+                localStorage.setItem('escompany_admin_logged_in', 'true');
+                localStorage.setItem('escompany_admin_username', username);
+                
+                showAdminDashboard(username);
+            } else {
+                loginError.classList.add('active');
+                setTimeout(() => {
+                    loginError.classList.remove('active');
+                }, 3000);
+            }
+        });
+        
+        // Show admin dashboard
+        function showAdminDashboard(username) {
+            loginPage.style.display = 'none';
+            adminDashboard.style.display = 'grid';
+            
+            // Set admin user info
+            adminUserName.textContent = username.charAt(0).toUpperCase() + username.slice(1);
+            adminUserRole.textContent = "Administrateur";
+            
+            // Load comments
+            updateCommentsTable();
+            updateStats();
+        }
+        
+        // Logout
+        logoutBtn.addEventListener('click', function() {
+            localStorage.removeItem('escompany_admin_logged_in');
+            localStorage.removeItem('escompany_admin_username');
+            location.reload();
+        });
+        
+        // Mobile menu toggle
+        mobileMenuBtn.addEventListener('click', function() {
+            adminSidebar.classList.toggle('active');
+        });
+        
+        // Navigation
+        document.querySelectorAll('.admin-nav a').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Remove active class from all links
+                document.querySelectorAll('.admin-nav a').forEach(item => {
+                    item.classList.remove('active');
+                });
+                
+                // Add active class to clicked link
+                this.classList.add('active');
+                
+                // For mobile, close sidebar after click
+                if (window.innerWidth <= 992) {
+                    adminSidebar.classList.remove('active');
+                }
+            });
+        });
+        
+        // Update stats
+        function updateStats() {
+            const total = commentsData.length;
+            const newComments = commentsData.filter(c => c.status === 'new').length;
+            const pending = commentsData.filter(c => c.status === 'pending').length;
+            const responded = commentsData.filter(c => c.status === 'responded').length;
+            
+            totalCommentsEl.textContent = total;
+            newCommentsEl.textContent = newComments;
+            pendingCommentsEl.textContent = pending;
+            respondedCommentsEl.textContent = responded;
+        }
+        
+        // Update comments table
+        function updateCommentsTable(filter = 'all') {
+            let filteredComments = [...commentsData];
+            
+            // Apply filter
+            if (filter !== 'all') {
+                filteredComments = commentsData.filter(comment => comment.status === filter);
+            }
+            
+            // Sort by date (newest first)
+            filteredComments.sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            // Clear table
+            commentsTableBody.innerHTML = '';
+            
+            // Add comments to table
+            filteredComments.forEach(comment => {
+                const row = document.createElement('tr');
+                
+                // Format date for display
+                const commentDate = new Date(comment.date);
+                const formattedDate = commentDate.toLocaleDateString('fr-FR', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric'
+                }) + ' ' + commentDate.toLocaleTimeString('fr-FR', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                
+                // Get first letter for avatar
+                const firstLetter = comment.fullName.charAt(0).toUpperCase();
+                
+                // Status badge text
+                let statusText = '';
+                let statusClass = '';
+                
+                switch(comment.status) {
+                    case 'new':
+                        statusText = 'Nouveau';
+                        statusClass = 'status-new';
+                        break;
+                    case 'pending':
+                        statusText = 'En attente';
+                        statusClass = 'status-pending';
+                        break;
+                    case 'responded':
+                        statusText = 'Répondu';
+                        statusClass = 'status-responded';
+                        break;
+                }
+                
+                row.innerHTML = `
+                    <td>
+                        <div class="comment-user">
+                            <div class="user-avatar">${firstLetter}</div>
+                            <div class="user-info">
+                                <h4>${comment.fullName}</h4>
+                                <p>${comment.email}</p>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="comment-subject">${comment.subject}</td>
+                    <td class="comment-message" title="${comment.message}">${comment.message.substring(0, 50)}${comment.message.length > 50 ? '...' : ''}</td>
+                    <td>${formattedDate}</td>
+                    <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="action-btn view-btn" data-id="${comment.id}" title="Voir">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="action-btn mark-btn" data-id="${comment.id}" title="Marquer comme répondu">
+                                <i class="fas fa-check"></i>
+                            </button>
+                            <button class="action-btn delete-btn" data-id="${comment.id}" title="Supprimer">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                
+                commentsTableBody.appendChild(row);
+            });
+            
+            // Add event listeners to action buttons
+            document.querySelectorAll('.view-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const commentId = parseInt(this.getAttribute('data-id'));
+                    viewComment(commentId);
+                });
+            });
+            
+            document.querySelectorAll('.mark-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const commentId = parseInt(this.getAttribute('data-id'));
+                    markAsResponded(commentId);
+                });
+            });
+            
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const commentId = parseInt(this.getAttribute('data-id'));
+                    deleteComment(commentId);
+                });
+            });
+            
+            // Update filter buttons
+            filterButtons.forEach(btn => {
+                if (btn.getAttribute('data-filter') === filter) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+        }
+        
+        // View comment details
+        function viewComment(commentId) {
+            const comment = commentsData.find(c => c.id === commentId);
+            
+            if (!comment) return;
+            
+            selectedCommentId = commentId;
+            
+            // Update modal content
+            modalFullName.textContent = comment.fullName;
+            modalPhone.textContent = comment.phone;
+            modalEmail.textContent = comment.email;
+            modalSubject.textContent = comment.subject;
+            modalMessage.textContent = comment.message;
+            modalDate.textContent = comment.date;
+            
+            // Mark as read if it's new
+            if (!comment.read) {
+                comment.read = true;
+                updateCommentsTable();
+                updateStats();
+            }
+            
+            // Show modal
+            commentModal.classList.add('active');
+        }
+        
+        // Mark comment as responded
+        function markAsResponded(commentId) {
+            const commentIndex = commentsData.findIndex(c => c.id === commentId);
+            
+            if (commentIndex !== -1) {
+                commentsData[commentIndex].status = 'responded';
+                updateCommentsTable();
+                updateStats();
+                
+                // If modal is open for this comment, update it
+                if (selectedCommentId === commentId) {
+                    modalSubject.textContent = commentsData[commentIndex].subject;
+                }
+                
+                alert('Commentaire marqué comme répondu');
+            }
+        }
+        
+        // Delete comment
+        function deleteComment(commentId) {
+            if (confirm('Êtes-vous sûr de vouloir supprimer ce commentaire ?')) {
+                commentsData = commentsData.filter(c => c.id !== commentId);
+                updateCommentsTable();
+                updateStats();
+                alert('Commentaire supprimé');
+            }
+        }
+        
+        // Send response (simulated)
+        function sendResponse() {
+            const responseText = document.getElementById('responseText').value;
+            
+            if (!responseText.trim()) {
+                alert('Veuillez écrire une réponse');
+                return;
+            }
+            
+            // In production, this would send an email to the user
+            alert('Réponse envoyée à l\'utilisateur !');
+            
+            // Mark as responded
+            if (selectedCommentId) {
+                markAsResponded(selectedCommentId);
+            }
+            
+            // Clear response textarea
+            document.getElementById('responseText').value = '';
+            
+            // Close modal
+            commentModal.classList.remove('active');
+        }
+        
+        // Filter comments
+        filterButtons.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const filter = this.getAttribute('data-filter');
+                updateCommentsTable(filter);
+            });
+        });
+        
+        // Modal close events
+        closeModalBtn.addEventListener('click', function() {
+            commentModal.classList.remove('active');
+        });
+        
+        closeModalIcon.addEventListener('click', function() {
+            commentModal.classList.remove('active');
+        });
+        
+        // Close modal when clicking outside
+        commentModal.addEventListener('click', function(e) {
+            if (e.target === commentModal) {
+                commentModal.classList.remove('active');
+            }
+        });
+        
+        // Mark as responded button
+        markAsRespondedBtn.addEventListener('click', function() {
+            if (selectedCommentId) {
+                markAsResponded(selectedCommentId);
+                commentModal.classList.remove('active');
+            }
+        });
+        
+        // Send response button
+        sendResponseBtn.addEventListener('click', sendResponse);
+        
+        // Initialize
+        checkAuth();
+    </script>
+</body>
+</html>
