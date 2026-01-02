@@ -1,7 +1,7 @@
 {
   "name": "escompany-backend",
   "version": "1.0.0",
-  "description": "Backend API pour ES_COMPANY",
+  "description": "API Backend pour ES_COMPANY - Gestion des commentaires",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -10,7 +10,12 @@
   "dependencies": {
     "express": "^4.18.2",
     "cors": "^2.8.5",
-    "dotenv": "^16.0.3",
-    "mongoose": "^7.0.3"
-  }
+    "dotenv": "^16.0.3"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "keywords": ["api", "backend", "escompany", "contact"],
+  "author": "ES_COMPANY",
+  "license": "MIT"
 }
