@@ -1,428 +1,369 @@
+
+
+
+
+// server.js
 const express = require('express');
+const mongoose = require('mongoose');
 const cors = require('cors');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
 const app = express();
-const PORT = process.env.PORT || 3000;
-
-// Middleware
-app.use(cors({
-  origin: [
-    'https://e-s-company.netlify.app',
-    'http://localhost:5500',
-    'http://localhost:3000',
-    'http://127.0.0.1:5500'
-  ],
-  credentials: true,
-  optionsSuccessStatus: 200
-}));
-
+app.use(cors());
 app.use(express.json());
 
-// Stockage en mémoire (pour la version simple)
-let comments = [];
-let commentIdCounter = 1;
+// MongoDB Connection
+mongoose.connect(process.env.MONGODB_URI || 'mongodb+srv://your-username:your-password@cluster.mongodb.net/escompany', {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+});
 
-// Initialiser quelques données de test
-function initializeSampleData() {
-  if (comments.length === 0) {
-    comments = [
-      {
-        id: commentIdCounter++,
-        fullName: "Jean Dupont",
-        phone: "+509 48 12 34 56",
-        email: "jean.dupont@example.com",
-        subject: "Diamants FreeFire",
-        subjectCode: "freefire",
-        message: "Bonjour, j'ai commandé 500 diamants FreeFire il y a 2 heures mais je ne les ai pas encore reçus. Pouvez-vous vérifier?",
-        date: new Date().toISOString(),
-        status: "new",
-        read: false,
-        source: "website_form"
-      },
-      {
-        id: commentIdCounter++,
-        fullName: "Marie Laurent",
-        phone: "+509 48 98 76 54",
-        email: "marie.laurent@example.com",
-        subject: "Abonnement Netflix",
-        subjectCode: "netflix",
-        message: "Je souhaite souscrire à un abonnement Netflix Premium pour 6 mois. Quels sont les tarifs et modalités?",
-        date: new Date(Date.now() - 86400000).toISOString(),
-        status: "pending",
-        read: true,
-        source: "website_form"
-      },
-      {
-        id: commentIdCounter++,
-        fullName: "Pierre Martin",
-        phone: "+1 510-281 7365",
-        email: "pierre.martin@example.com",
-        subject: "Création compte PayPal",
-        subjectCode: "paypal",
-        message: "J'ai besoin d'un compte PayPal vérifié pour mes transactions en ligne. Combien de temps prend le processus?",
-        date: new Date(Date.now() - 172800000).toISOString(),
-        status: "responded",
-        read: true,
-        source: "website_form"
-      }
-    ];
-  }
-}
+// Models
+const AdminSchema = new mongoose.Schema({
+    username: { type: String, required: true, unique: true },
+    password: { type: String, required: true },
+    name: { type: String, default: 'Admin ES_COMPANY' },
+    role: { type: String, default: 'admin' },
+    createdAt: { type: Date, default: Date.now }
+});
 
-// Middleware pour vérifier l'authentification admin
-const authenticateAdmin = (req, res, next) => {
-  const authHeader = req.headers.authorization;
-  
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ 
-      success: false, 
-      error: 'Token d\'authentification requis' 
+const CommentSchema = new mongoose.Schema({
+    fullName: { type: String, required: true },
+    email: { type: String, required: true },
+    phone: { type: String },
+    subject: { type: String, default: 'Autre' },
+    message: { type: String, required: true },
+    status: { type: String, default: 'new' },
+    read: { type: Boolean, default: false },
+    date: { type: Date, default: Date.now }
+});
+
+const PayPalOrderSchema = new mongoose.Schema({
+    orderNumber: { type: String, required: true, unique: true },
+    customerName: { type: String, required: true },
+    customerEmail: { type: String, required: true },
+    customerPhone: { type: String, required: true },
+    paypalEmail: { type: String, required: true },
+    country: { type: String, required: true },
+    notes: { type: String },
+    price: { type: String, required: true },
+    paymentMethod: { type: String, required: true },
+    paymentNumber: { type: String, required: true },
+    proofImage: { type: String },
+    status: { type: String, default: 'pending' },
+    processed: { type: Boolean, default: false },
+    date: { type: Date, default: Date.now },
+    type: { type: String, default: 'paypal' }
+});
+
+const NetflixOrderSchema = new mongoose.Schema({
+    orderNumber: { type: String, required: true, unique: true },
+    customerName: { type: String, required: true },
+    customerEmail: { type: String, required: true },
+    customerPhone: { type: String, required: true },
+    plan: { type: String, required: true },
+    price: { type: String, required: true },
+    paymentMethod: { type: String, required: true },
+    paymentNumber: { type: String, required: true },
+    status: { type: String, default: 'pending' },
+    date: { type: Date, default: Date.now },
+    notes: { type: String }
+});
+
+const Admin = mongoose.model('Admin', AdminSchema);
+const Comment = mongoose.model('Comment', CommentSchema);
+const PayPalOrder = mongoose.model('PayPalOrder', PayPalOrderSchema);
+const NetflixOrder = mongoose.model('NetflixOrder', NetflixOrderSchema);
+
+// JWT Secret
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-this';
+
+// Middleware pour vérifier le token
+const authenticateToken = (req, res, next) => {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+
+    if (!token) return res.status(401).json({ success: false, error: 'Token manquant' });
+
+    jwt.verify(token, JWT_SECRET, (err, user) => {
+        if (err) return res.status(403).json({ success: false, error: 'Token invalide' });
+        req.user = user;
+        next();
     });
-  }
-  
-  const token = authHeader.split(' ')[1];
-  const adminToken = process.env.ADMIN_TOKEN || 'escompany_admin_token_secure_123';
-  
-  if (token !== adminToken) {
-    return res.status(403).json({ 
-      success: false, 
-      error: 'Token d\'authentification invalide' 
-    });
-  }
-  
-  next();
 };
 
-// Middleware de log des requêtes
-app.use((req, res, next) => {
-  console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
-  next();
-});
-
-// Route de santé
+// Routes
 app.get('/api/health', (req, res) => {
-  res.json({ 
-    success: true,
-    status: 'healthy', 
-    service: 'ES_COMPANY API',
-    version: '1.0.0',
-    timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'development',
-    commentsCount: comments.length
-  });
+    res.json({ success: true, message: 'API ES_COMPANY en ligne', timestamp: new Date() });
 });
 
-// Route racine
-app.get('/', (req, res) => {
-  res.json({ 
-    success: true,
-    message: 'Bienvenue sur l\'API ES_COMPANY',
-    service: 'Gestion des commentaires et contact',
-    version: '1.0.0',
-    documentation: {
-      endpoints: {
-        health: 'GET /api/health',
-        submitComment: 'POST /api/comments',
-        getComments: 'GET /api/comments (admin only)',
-        adminLogin: 'POST /api/admin/login'
-      }
+// Admin Login
+app.post('/api/admin/login', async (req, res) => {
+    try {
+        const { username, password } = req.body;
+
+        // Pour la première fois, créer un admin par défaut
+        const adminCount = await Admin.countDocuments();
+        if (adminCount === 0) {
+            const hashedPassword = await bcrypt.hash('admin123', 10);
+            await Admin.create({
+                username: 'admin',
+                password: hashedPassword,
+                name: 'Admin ES_COMPANY',
+                role: 'admin'
+            });
+        }
+
+        const admin = await Admin.findOne({ username });
+        if (!admin) {
+            return res.status(401).json({ success: false, error: 'Identifiants incorrects' });
+        }
+
+        const validPassword = await bcrypt.compare(password, admin.password);
+        if (!validPassword) {
+            return res.status(401).json({ success: false, error: 'Identifiants incorrects' });
+        }
+
+        const token = jwt.sign(
+            { id: admin._id, username: admin.username, role: admin.role },
+            JWT_SECRET,
+            { expiresIn: '24h' }
+        );
+
+        res.json({
+            success: true,
+            token,
+            user: {
+                id: admin._id,
+                username: admin.username,
+                name: admin.name,
+                role: admin.role
+            }
+        });
+    } catch (error) {
+        console.error('Login error:', error);
+        res.status(500).json({ success: false, error: 'Erreur serveur' });
     }
-  });
 });
 
-// GET tous les commentaires (Admin seulement)
-app.get('/api/comments', authenticateAdmin, (req, res) => {
-  try {
-    // Options de filtrage
-    const { status, limit, sort = 'desc' } = req.query;
-    
-    let filteredComments = [...comments];
-    
-    // Filtrer par statut si spécifié
-    if (status && ['new', 'pending', 'responded'].includes(status)) {
-      filteredComments = filteredComments.filter(comment => comment.status === status);
+// Comments
+app.get('/api/comments', authenticateToken, async (req, res) => {
+    try {
+        const comments = await Comment.find().sort({ date: -1 });
+        res.json({ success: true, comments });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
     }
-    
-    // Trier par date
-    filteredComments.sort((a, b) => {
-      const dateA = new Date(a.date);
-      const dateB = new Date(b.date);
-      return sort === 'asc' ? dateA - dateB : dateB - dateA;
-    });
-    
-    // Limiter les résultats si spécifié
-    if (limit && !isNaN(limit)) {
-      filteredComments = filteredComments.slice(0, parseInt(limit));
-    }
-    
-    // Calculer les statistiques
-    const stats = {
-      total: comments.length,
-      new: comments.filter(c => c.status === 'new').length,
-      pending: comments.filter(c => c.status === 'pending').length,
-      responded: comments.filter(c => c.status === 'responded').length
-    };
-    
-    res.json({
-      success: true,
-      count: filteredComments.length,
-      total: comments.length,
-      stats: stats,
-      comments: filteredComments
-    });
-    
-  } catch (error) {
-    console.error('Erreur GET /api/comments:', error);
-    res.status(500).json({ 
-      success: false, 
-      error: 'Erreur lors de la récupération des commentaires' 
-    });
-  }
 });
 
-// POST un nouveau commentaire
-app.post('/api/comments', (req, res) => {
-  try {
-    const { fullName, phone, email, subject, subjectCode, message } = req.body;
-    
-    // Validation
-    if (!fullName || !fullName.trim()) {
-      return res.status(400).json({ 
-        success: false, 
-        error: 'Le nom complet est requis' 
-      });
+app.post('/api/comments', async (req, res) => {
+    try {
+        const comment = new Comment(req.body);
+        await comment.save();
+        res.json({ success: true, comment });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
     }
-    
-    if (!email || !email.trim()) {
-      return res.status(400).json({ 
-        success: false, 
-        error: 'L\'email est requis' 
-      });
-    }
-    
-    if (!message || !message.trim()) {
-      return res.status(400).json({ 
-        success: false, 
-        error: 'Le message est requis' 
-      });
-    }
-    
-    // Vérifier format email basique
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return res.status(400).json({ 
-        success: false, 
-        error: 'Format d\'email invalide' 
-      });
-    }
-    
-    // Créer le nouveau commentaire
-    const newComment = {
-      id: commentIdCounter++,
-      fullName: fullName.trim(),
-      phone: phone ? phone.trim() : '',
-      email: email.trim(),
-      subject: subject || 'Autre',
-      subjectCode: subjectCode || 'other',
-      message: message.trim(),
-      date: new Date().toISOString(),
-      status: 'new',
-      read: false,
-      source: req.headers.origin || 'website_form',
-      ip: req.ip || req.headers['x-forwarded-for'] || 'unknown'
-    };
-    
-    // Ajouter au tableau
-    comments.push(newComment);
-    
-    console.log('✅ Nouveau commentaire reçu:', {
-      id: newComment.id,
-      name: newComment.fullName,
-      email: newComment.email,
-      subject: newComment.subject,
-      date: new Date(newComment.date).toLocaleString('fr-FR')
-    });
-    
-    // Réponse de succès
-    res.status(201).json({
-      success: true,
-      message: 'Votre message a été envoyé avec succès',
-      comment: {
-        id: newComment.id,
-        fullName: newComment.fullName,
-        email: newComment.email,
-        subject: newComment.subject,
-        date: new Date(newComment.date).toLocaleString('fr-FR')
-      },
-      timestamp: new Date().toISOString()
-    });
-    
-  } catch (error) {
-    console.error('❌ Erreur POST /api/comments:', error);
-    res.status(500).json({ 
-      success: false, 
-      error: 'Erreur interne du serveur lors de l\'enregistrement du commentaire' 
-    });
-  }
 });
 
-// PUT mettre à jour un commentaire (Admin seulement)
-app.put('/api/comments/:id', authenticateAdmin, (req, res) => {
-  try {
-    const commentId = parseInt(req.params.id);
-    const { status, read } = req.body;
-    
-    const commentIndex = comments.findIndex(c => c.id === commentId);
-    
-    if (commentIndex === -1) {
-      return res.status(404).json({ 
-        success: false, 
-        error: 'Commentaire non trouvé' 
-      });
+app.put('/api/comments/:id', authenticateToken, async (req, res) => {
+    try {
+        const comment = await Comment.findByIdAndUpdate(
+            req.params.id,
+            req.body,
+            { new: true }
+        );
+        res.json({ success: true, comment });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
     }
-    
-    // Mettre à jour les champs
-    if (status && ['new', 'pending', 'responded'].includes(status)) {
-      comments[commentIndex].status = status;
-    }
-    
-    if (read !== undefined) {
-      comments[commentIndex].read = Boolean(read);
-    }
-    
-    res.json({
-      success: true,
-      message: 'Commentaire mis à jour avec succès',
-      comment: comments[commentIndex]
-    });
-    
-  } catch (error) {
-    console.error('Erreur PUT /api/comments/:id:', error);
-    res.status(500).json({ 
-      success: false, 
-      error: 'Erreur lors de la mise à jour du commentaire' 
-    });
-  }
 });
 
-// DELETE un commentaire (Admin seulement)
-app.delete('/api/comments/:id', authenticateAdmin, (req, res) => {
-  try {
-    const commentId = parseInt(req.params.id);
-    const initialLength = comments.length;
-    
-    comments = comments.filter(c => c.id !== commentId);
-    
-    if (comments.length === initialLength) {
-      return res.status(404).json({ 
-        success: false, 
-        error: 'Commentaire non trouvé' 
-      });
+// PayPal Orders
+app.post('/api/orders/paypal', async (req, res) => {
+    try {
+        const orderData = req.body;
+        
+        // Vérifier si le numéro de commande existe déjà
+        const existingOrder = await PayPalOrder.findOne({ orderNumber: orderData.orderNumber });
+        if (existingOrder) {
+            return res.status(400).json({ success: false, error: 'Numéro de commande déjà utilisé' });
+        }
+
+        const order = new PayPalOrder(orderData);
+        await order.save();
+        
+        res.json({ 
+            success: true, 
+            message: 'Commande PayPal enregistrée avec succès',
+            order 
+        });
+    } catch (error) {
+        console.error('Erreur création commande PayPal:', error);
+        res.status(500).json({ success: false, error: error.message });
     }
-    
-    res.json({
-      success: true,
-      message: 'Commentaire supprimé avec succès',
-      deletedId: commentId,
-      remainingCount: comments.length
-    });
-    
-  } catch (error) {
-    console.error('Erreur DELETE /api/comments/:id:', error);
-    res.status(500).json({ 
-      success: false, 
-      error: 'Erreur lors de la suppression du commentaire' 
-    });
-  }
 });
 
-// Login admin
-app.post('/api/admin/login', (req, res) => {
-  try {
-    const { username, password } = req.body;
-    
-    if (!username || !password) {
-      return res.status(400).json({ 
-        success: false, 
-        error: 'Nom d\'utilisateur et mot de passe requis' 
-      });
+app.get('/api/orders/paypal', authenticateToken, async (req, res) => {
+    try {
+        const { status, limit } = req.query;
+        let query = {};
+        
+        if (status && status !== 'all') {
+            query.status = status;
+        }
+        
+        let orders = PayPalOrder.find(query).sort({ date: -1 });
+        
+        if (limit) {
+            orders = orders.limit(parseInt(limit));
+        }
+        
+        const result = await orders;
+        res.json({ success: true, orders: result });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
     }
-    
-    const adminUsername = process.env.ADMIN_USERNAME || 'admin_escompany';
-    const adminPassword = process.env.ADMIN_PASSWORD || 'admin123';
-    const adminToken = process.env.ADMIN_TOKEN || 'escompany_admin_token_secure_123';
-    
-    // Vérifier les identifiants
-    if (username === adminUsername && password === adminPassword) {
-      res.json({ 
-        success: true, 
-        message: 'Connexion réussie',
-        token: adminToken,
-        user: {
-          username,
-          role: 'admin',
-          permissions: ['read_comments', 'update_comments', 'delete_comments']
-        },
-        expiresIn: '7d'
-      });
-      
-      console.log(`🔐 Admin connecté: ${username}`);
-      
-    } else {
-      console.log(`❌ Tentative de connexion échouée pour: ${username}`);
-      res.status(401).json({ 
-        success: false, 
-        error: 'Identifiants incorrects' 
-      });
+});
+
+app.get('/api/orders/paypal/:id', authenticateToken, async (req, res) => {
+    try {
+        const order = await PayPalOrder.findById(req.params.id);
+        if (!order) {
+            return res.status(404).json({ success: false, error: 'Commande non trouvée' });
+        }
+        res.json({ success: true, order });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
     }
-    
-  } catch (error) {
-    console.error('Erreur POST /api/admin/login:', error);
-    res.status(500).json({ 
-      success: false, 
-      error: 'Erreur lors de la connexion' 
-    });
-  }
 });
 
-// Middleware pour les routes non trouvées
-app.use((req, res) => {
-  res.status(404).json({ 
-    success: false, 
-    error: 'Route non trouvée',
-    path: req.url,
-    method: req.method
-  });
+app.put('/api/orders/paypal/:id', authenticateToken, async (req, res) => {
+    try {
+        const order = await PayPalOrder.findByIdAndUpdate(
+            req.params.id,
+            req.body,
+            { new: true }
+        );
+        res.json({ success: true, order });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
 });
 
-// Middleware pour les erreurs globales
-app.use((err, req, res, next) => {
-  console.error('🔥 Erreur globale:', err);
-  res.status(500).json({ 
-    success: false, 
-    error: 'Erreur interne du serveur',
-    message: process.env.NODE_ENV === 'development' ? err.message : 'Une erreur est survenue'
-  });
+// Netflix Orders (pour compatibilité)
+app.post('/api/orders', async (req, res) => {
+    try {
+        const orderData = req.body;
+        
+        if (orderData.type === 'paypal') {
+            const order = new PayPalOrder(orderData);
+            await order.save();
+            res.json({ success: true, order });
+        } else if (orderData.type === 'netflix') {
+            const order = new NetflixOrder(orderData);
+            await order.save();
+            res.json({ success: true, order });
+        } else {
+            res.status(400).json({ success: false, error: 'Type de commande non supporté' });
+        }
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
 });
 
-// Initialiser les données et démarrer le serveur
-function startServer() {
-  initializeSampleData();
-  
-  app.listen(PORT, () => {
-    console.log('='.repeat(50));
-    console.log(`🚀 Serveur ES_COMPANY API démarré`);
-    console.log(`📡 Port: ${PORT}`);
-    console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
-    console.log(`🕐 Date: ${new Date().toLocaleString('fr-FR')}`);
-    console.log('='.repeat(50));
-    console.log(`🔗 URL: http://localhost:${PORT}`);
-    console.log(`🩺 Health: http://localhost:${PORT}/api/health`);
-    console.log(`💾 Commentaires initiaux: ${comments.length}`);
-    console.log('='.repeat(50));
-  });
-}
+// Dashboard Stats
+app.get('/api/dashboard/stats', authenticateToken, async (req, res) => {
+    try {
+        const [totalComments, newComments, pendingComments, respondedComments] = await Promise.all([
+            Comment.countDocuments(),
+            Comment.countDocuments({ status: 'new' }),
+            Comment.countDocuments({ status: 'pending' }),
+            Comment.countDocuments({ status: 'responded' })
+        ]);
 
-// Démarrer le serveur
-startServer();
+        const [totalPayPalOrders, pendingPayPalOrders] = await Promise.all([
+            PayPalOrder.countDocuments(),
+            PayPalOrder.countDocuments({ status: 'pending' })
+        ]);
+
+        const [totalNetflixOrders, pendingNetflixOrders] = await Promise.all([
+            NetflixOrder.countDocuments(),
+            NetflixOrder.countDocuments({ status: 'pending' })
+        ]);
+
+        res.json({
+            success: true,
+            stats: {
+                comments: { total: totalComments, new: newComments, pending: pendingComments, responded: respondedComments },
+                paypal: { total: totalPayPalOrders, pending: pendingPayPalOrders },
+                netflix: { total: totalNetflixOrders, pending: pendingNetflixOrders }
+            }
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// Recent Activity
+app.get('/api/dashboard/activity', authenticateToken, async (req, res) => {
+    try {
+        const [recentComments, recentPayPalOrders, recentNetflixOrders] = await Promise.all([
+            Comment.find().sort({ date: -1 }).limit(5),
+            PayPalOrder.find().sort({ date: -1 }).limit(5),
+            NetflixOrder.find().sort({ date: -1 }).limit(5)
+        ]);
+
+        const activities = [];
+
+        recentComments.forEach(comment => {
+            activities.push({
+                type: 'comment',
+                id: comment._id,
+                title: `${comment.fullName}`,
+                description: `Nouveau commentaire: ${comment.subject || 'Sans sujet'}`,
+                status: comment.status,
+                date: comment.date,
+                icon: 'fas fa-comments'
+            });
+        });
+
+        recentPayPalOrders.forEach(order => {
+            activities.push({
+                type: 'paypal',
+                id: order._id,
+                title: `${order.customerName}`,
+                description: `Nouvelle commande PayPal: ${order.orderNumber}`,
+                status: order.status,
+                date: order.date,
+                icon: 'fab fa-paypal'
+            });
+        });
+
+        recentNetflixOrders.forEach(order => {
+            activities.push({
+                type: 'netflix',
+                id: order._id,
+                title: `${order.customerName}`,
+                description: `Nouvelle commande Netflix: ${order.plan}`,
+                status: order.status,
+                date: order.date,
+                icon: 'fab fa-netflix'
+            });
+        });
+
+        // Trier par date
+        activities.sort((a, b) => new Date(b.date) - new Date(a.date));
+        
+        res.json({ success: true, activities: activities.slice(0, 10) });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+});
